@@ -16,7 +16,7 @@ const mono = JetBrains_Mono({
 export const metadata: Metadata = {
   title: "FitBody — CRM за фитнес треньори",
   description:
-    "Управлявайте клиентите си и генерирайте персонализирани хранителни планове с AI.",
+    "Профилите, мерките и прогресът на всичките ви клиенти на едно място — и хранителен режим, който излиза готов от техните данни.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

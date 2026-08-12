@@ -117,6 +117,36 @@
   --sidebar-ring: oklch(0.72 0.17 150);
 }
 
+/* Scoped to the marketing page so the app's own tokens stay untouched. */
+.landing {
+  --void: #0b0b0b;
+  --panel: #151515;
+  --bone: #fafafa;
+  --lime: #c8f531;
+  --ash: #8f8f8f;
+  --line-dark: #272727;
+  --line-light: #e6e6e6;
+}
+
+@keyframes landing-marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.landing-marquee-track {
+  animation: landing-marquee 28s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-marquee-track {
+    animation: none;
+  }
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
