@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter, JetBrains_Mono } from "next/font/google";
+import { Inter, JetBrains_Mono, Roboto_Condensed } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 
@@ -13,6 +13,14 @@ const mono = JetBrains_Mono({
   subsets: ["latin", "cyrillic"],
 });
 
+// Carries headings on both the marketing page and the app, so the brand voice
+// does not stop at the signup form.
+const display = Roboto_Condensed({
+  variable: "--font-display",
+  subsets: ["latin", "cyrillic"],
+  weight: ["700", "900"],
+});
+
 export const metadata: Metadata = {
   title: "FitBody — CRM за фитнес треньори",
   description:
@@ -23,7 +31,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="bg"
-      className={`${sans.variable} ${mono.variable} h-full antialiased`}
+      className={`dark ${sans.variable} ${mono.variable} ${display.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
         {children}

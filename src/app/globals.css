@@ -9,7 +9,7 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-sans);
   --font-mono: var(--font-geist-mono);
-  --font-heading: var(--font-sans);
+  --font-heading: var(--font-display);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -72,7 +72,8 @@
   --chart-3: oklch(0.75 0.15 85);
   --chart-4: oklch(0.6 0.16 265);
   --chart-5: oklch(0.68 0.18 25);
-  --radius: 0.75rem;
+  /* Square corners, matching the marketing page and its reference. */
+  --radius: 0rem;
   --sidebar: oklch(0.975 0.008 150);
   --sidebar-foreground: oklch(0.17 0.02 155);
   --sidebar-primary: oklch(0.62 0.16 152);
@@ -83,38 +84,41 @@
   --sidebar-ring: oklch(0.62 0.16 152);
 }
 
+/* The app runs on this palette — the same hex values the marketing page uses,
+   so a visitor who signs up lands in the design they were just looking at.
+   The light :root block above is unused but left intact for a future toggle. */
 .dark {
-  --background: oklch(0.16 0.015 155);
-  --foreground: oklch(0.97 0.008 145);
-  --card: oklch(0.21 0.018 155);
-  --card-foreground: oklch(0.97 0.008 145);
-  --popover: oklch(0.21 0.018 155);
-  --popover-foreground: oklch(0.97 0.008 145);
-  --primary: oklch(0.72 0.17 150);
-  --primary-foreground: oklch(0.18 0.03 155);
-  --secondary: oklch(0.27 0.02 155);
-  --secondary-foreground: oklch(0.97 0.008 145);
-  --muted: oklch(0.27 0.015 155);
-  --muted-foreground: oklch(0.7 0.02 150);
-  --accent: oklch(0.3 0.04 152);
-  --accent-foreground: oklch(0.97 0.008 145);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 12%);
-  --input: oklch(1 0 0 / 16%);
-  --ring: oklch(0.72 0.17 150);
-  --chart-1: oklch(0.72 0.17 150);
-  --chart-2: oklch(0.72 0.13 195);
-  --chart-3: oklch(0.78 0.14 85);
-  --chart-4: oklch(0.65 0.15 265);
-  --chart-5: oklch(0.7 0.17 25);
-  --sidebar: oklch(0.19 0.018 155);
-  --sidebar-foreground: oklch(0.97 0.008 145);
-  --sidebar-primary: oklch(0.72 0.17 150);
-  --sidebar-primary-foreground: oklch(0.18 0.03 155);
-  --sidebar-accent: oklch(0.3 0.04 152);
-  --sidebar-accent-foreground: oklch(0.97 0.008 145);
-  --sidebar-border: oklch(1 0 0 / 12%);
-  --sidebar-ring: oklch(0.72 0.17 150);
+  --background: #0b0b0b;
+  --foreground: #fafafa;
+  --card: #151515;
+  --card-foreground: #fafafa;
+  --popover: #151515;
+  --popover-foreground: #fafafa;
+  --primary: #c8f531;
+  --primary-foreground: #0b0b0b;
+  --secondary: #1e1e1e;
+  --secondary-foreground: #fafafa;
+  --muted: #1a1a1a;
+  --muted-foreground: #8f8f8f;
+  --accent: #272727;
+  --accent-foreground: #fafafa;
+  --destructive: #f0563f;
+  --border: #272727;
+  --input: #303030;
+  --ring: #c8f531;
+  --chart-1: #c8f531;
+  --chart-2: #7dd3c0;
+  --chart-3: #f0c531;
+  --chart-4: #8f9bf0;
+  --chart-5: #f0563f;
+  --sidebar: #0b0b0b;
+  --sidebar-foreground: #fafafa;
+  --sidebar-primary: #c8f531;
+  --sidebar-primary-foreground: #0b0b0b;
+  --sidebar-accent: #272727;
+  --sidebar-accent-foreground: #fafafa;
+  --sidebar-border: #272727;
+  --sidebar-ring: #c8f531;
 }
 
 /* Scoped to the marketing page so the app's own tokens stay untouched. */

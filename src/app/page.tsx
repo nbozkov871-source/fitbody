@@ -1,15 +1,6 @@
 import Link from "next/link";
-import { Roboto_Condensed } from "next/font/google";
 import { Marquee } from "@/components/landing/marquee";
 import { RecordCard } from "@/components/landing/record-card";
-
-// Heavy condensed caps carry the whole look, so the display face is the one
-// font this route adds. Cyrillic is a hard requirement, not a nice-to-have.
-const display = Roboto_Condensed({
-  variable: "--font-display",
-  subsets: ["latin", "cyrillic"],
-  weight: ["700", "900"],
-});
 
 const focusDark =
   "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--lime)]";
@@ -125,7 +116,7 @@ const STEPS = [
 export default function Home() {
   return (
     <div
-      className={`landing ${display.variable} flex min-h-svh flex-col bg-[var(--void)] text-[var(--bone)]`}
+      className="landing flex min-h-svh flex-col bg-[var(--void)] text-[var(--bone)]"
     >
       <header className="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-6">
         <span className="font-[family-name:var(--font-display)] text-xl font-black tracking-tight uppercase">

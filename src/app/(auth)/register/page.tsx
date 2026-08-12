@@ -61,7 +61,7 @@ export default function RegisterPage() {
       <CardHeader>
         <CardTitle className="text-2xl">Създаване на акаунт</CardTitle>
         <CardDescription>
-          Регистрирайте се като треньор и започнете да управлявате клиентите си.
+          Три полета, и сте готови да добавите първия си клиент.
         </CardDescription>
       </CardHeader>
       <form onSubmit={handleSubmit}>
