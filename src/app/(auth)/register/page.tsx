@@ -110,7 +110,7 @@ export default function RegisterPage() {
         </CardContent>
         <CardFooter className="mt-6 flex-col gap-3">
           <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? "Създаване…" : "Създай акаунт"}
+            {loading ? "Създаване…" : "Създайте акаунт"}
           </Button>
           <p className="text-sm text-muted-foreground">
             Вече имате акаунт?{" "}

@@ -129,10 +129,8 @@ export default function Home() {
           >
             Вход
           </Link>
-          {/* Short form of the same action — the nav has no room for the full
-              label, but the verb and object stay the same. */}
           <Link href="/register" className={`${limeButton} ${focusDark}`}>
-            Добавете клиент
+            Създайте акаунт
           </Link>
         </nav>
       </header>
@@ -153,7 +151,7 @@ export default function Home() {
             </p>
             <div className="mt-9 flex flex-wrap items-center gap-6 text-sm">
               <Link href="/register" className={`${limeButton} ${focusDark}`}>
-                Добавете първия си клиент
+                Създайте акаунт
               </Link>
               <Link
                 href="/login"
@@ -266,7 +264,7 @@ export default function Home() {
               href="/register"
               className={`mt-14 ${limeButton} ${focusLight}`}
             >
-              Добавете първия си клиент
+              Създайте акаунт
             </Link>
           </div>
         </section>
@@ -313,7 +311,7 @@ export default function Home() {
             мерки. Оттам нататък всяко претегляне има къде да отиде.
           </p>
           <Link href="/register" className={`mt-9 ${limeButton} ${focusDark}`}>
-            Добавете първия си клиент
+            Създайте акаунт
           </Link>
         </section>
       </main>
