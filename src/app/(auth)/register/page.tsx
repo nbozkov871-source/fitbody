@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { authErrorMessage } from "@/lib/auth-errors";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -46,7 +47,7 @@ export default function RegisterPage() {
     });
 
     if (error) {
-      setError(error.message);
+      setError(authErrorMessage(error));
       setLoading(false);
       return;
     }
