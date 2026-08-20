@@ -16,6 +16,10 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
+// A fresh account has an empty dashboard, so the first useful screen is the one
+// that puts a client in it.
+const FIRST_STEP = "/clients/new";
+
 export default function RegisterPage() {
   const router = useRouter();
   const [fullName, setFullName] = useState("");
@@ -36,7 +40,8 @@ export default function RegisterPage() {
       password,
       options: {
         data: { full_name: fullName, role: "trainer" },
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
+        // Send confirmed accounts to the same first step as the direct path.
+        emailRedirectTo: `${window.location.origin}/auth/callback?next=${FIRST_STEP}`,
       },
     });
 
@@ -52,7 +57,7 @@ export default function RegisterPage() {
       return;
     }
 
-    router.push("/dashboard");
+    router.push(FIRST_STEP);
     router.refresh();
   }
 
