@@ -30,6 +30,18 @@ export async function updateSession(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const { pathname } = request.nextUrl;
+
+  // Supabase sends confirmation links to the project's Site URL, which is not
+  // always this app's callback — a misconfigured one drops the visitor on the
+  // landing page holding a code nothing reads. Carry it to the callback rather
+  // than let a working link look broken.
+  const code = request.nextUrl.searchParams.get("code");
+  if (code && pathname !== "/auth/callback") {
+    const url = request.nextUrl.clone();
+    url.pathname = "/auth/callback";
+    return NextResponse.redirect(url);
+  }
+
   const isPublic = PUBLIC_ROUTES.some(
     (route) => pathname === route || pathname.startsWith(`${route}/`),
   );
