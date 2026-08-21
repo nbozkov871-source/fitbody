@@ -11,6 +11,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { FormSelect } from "@/components/form-select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -21,9 +22,6 @@ import {
   SEX_LABELS,
   type Client,
 } from "@/lib/types";
-
-const selectClass =
-  "h-9 rounded-md border border-input bg-transparent px-3 text-sm shadow-xs outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50";
 
 function age(birthDate: string | null) {
   if (!birthDate) return "";
@@ -88,22 +86,12 @@ export default async function NewPlanPage({
               <div className="grid gap-5 sm:grid-cols-3">
                 <div className="grid gap-2">
                   <Label htmlFor="sex">Пол *</Label>
-                  <select
+                  <FormSelect
                     id="sex"
                     name="sex"
-                    required
-                    className={selectClass}
-                    defaultValue={client.sex ?? ""}
-                  >
-                    <option value="" disabled>
-                      Избери
-                    </option>
-                    {Object.entries(SEX_LABELS).map(([value, label]) => (
-                      <option key={value} value={value}>
-                        {label}
-                      </option>
-                    ))}
-                  </select>
+                    options={SEX_LABELS}
+                    defaultValue={client.sex ?? undefined}
+                  />
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor="age">Възраст *</Label>
@@ -159,41 +147,21 @@ export default async function NewPlanPage({
               <div className="grid gap-5 sm:grid-cols-2">
                 <div className="grid gap-2">
                   <Label htmlFor="goal">Цел *</Label>
-                  <select
+                  <FormSelect
                     id="goal"
                     name="goal"
-                    required
-                    className={selectClass}
-                    defaultValue={client.goal ?? ""}
-                  >
-                    <option value="" disabled>
-                      Избери
-                    </option>
-                    {Object.entries(GOAL_LABELS).map(([value, label]) => (
-                      <option key={value} value={value}>
-                        {label}
-                      </option>
-                    ))}
-                  </select>
+                    options={GOAL_LABELS}
+                    defaultValue={client.goal ?? undefined}
+                  />
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor="activity">Ниво на активност *</Label>
-                  <select
+                  <FormSelect
                     id="activity"
                     name="activity"
-                    required
-                    className={selectClass}
-                    defaultValue={client.activity ?? ""}
-                  >
-                    <option value="" disabled>
-                      Избери
-                    </option>
-                    {Object.entries(ACTIVITY_LABELS).map(([value, label]) => (
-                      <option key={value} value={value}>
-                        {label}
-                      </option>
-                    ))}
-                  </select>
+                    options={ACTIVITY_LABELS}
+                    defaultValue={client.activity ?? undefined}
+                  />
                 </div>
               </div>
 

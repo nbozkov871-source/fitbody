@@ -70,30 +70,91 @@ export function calculateTargets(input: PlanInput): PlanTargets {
   return { bmr, tdee, calories, protein_g, fat_g, carbs_g };
 }
 
-const MEAL_NAMES = [
-  { name: "Закуска", time: "08:00" },
-  { name: "Обяд", time: "13:00" },
-  { name: "Следобедна закуска", time: "16:30" },
-  { name: "Вечеря", time: "19:30" },
-  { name: "Късна закуска", time: "21:30" },
+// Shares per slot rather than an equal split: a trainer's day is not four
+// identical plates. Each row sums to 1 so the day still lands on target.
+const MEAL_SLOTS = [
+  {
+    name: "Закуска",
+    time: "08:00",
+    items: [
+      "Овесени ядки с прясно мляко и банан",
+      "Омлет от 3 яйца с пълнозърнест хляб",
+      "Извара с мед и орехи",
+    ],
+  },
+  {
+    name: "Обяд",
+    time: "13:00",
+    items: [
+      "Пилешко филе с ориз и зелена салата",
+      "Телешко с печени картофи и зеленчуци",
+      "Риба с киноа и броколи",
+    ],
+  },
+  {
+    name: "Следобедна закуска",
+    time: "16:30",
+    items: [
+      "Гръцко кисело мляко с плод",
+      "Протеинов шейк и шепа бадеми",
+      "Пълнозърнест сандвич с пуешко",
+    ],
+  },
+  {
+    name: "Вечеря",
+    time: "19:30",
+    items: [
+      "Сьомга на фурна със зеленчуци",
+      "Пуешко със салата и авокадо",
+      "Омлет със спанак и сирене",
+    ],
+  },
+  {
+    name: "Късна закуска",
+    time: "21:30",
+    items: ["Извара", "Кефир", "Казеинов шейк"],
+  },
 ];
 
+const SHARES: Record<number, number[]> = {
+  2: [0.45, 0.55],
+  3: [0.3, 0.4, 0.3],
+  4: [0.25, 0.35, 0.15, 0.25],
+  5: [0.22, 0.32, 0.13, 0.23, 0.1],
+};
+
+// Rounding each meal on its own leaves the day a few grams short or long, which
+// looks like sloppy arithmetic to a trainer checking the totals. The last meal
+// absorbs whatever the rounding left over.
+function split(total: number, shares: number[]) {
+  const parts = shares.map((share) => Math.round(total * share));
+  const drift = total - parts.reduce((sum, part) => sum + part, 0);
+  parts[parts.length - 1] += drift;
+  return parts;
+}
+
 // PLACEHOLDER meal builder — swap for the AI call once the prompt/formulas land.
+// The foods are conversation starters for the trainer, not prescriptions.
 export function buildPlaceholderPlan(
   input: PlanInput,
   targets: PlanTargets,
 ): PlanContent {
-  const count = Math.min(Math.max(input.meals_per_day, 2), MEAL_NAMES.length);
-  const share = 1 / count;
+  const count = Math.min(Math.max(input.meals_per_day, 2), MEAL_SLOTS.length);
+  const shares = SHARES[count];
 
-  const meals = MEAL_NAMES.slice(0, count).map(({ name, time }) => ({
-    name,
-    time,
-    calories: Math.round(targets.calories * share),
-    protein_g: Math.round(targets.protein_g * share),
-    carbs_g: Math.round(targets.carbs_g * share),
-    fat_g: Math.round(targets.fat_g * share),
-    items: ["Източник на протеин", "Въглехидратен източник", "Зеленчуци"],
+  const calories = split(targets.calories, shares);
+  const protein = split(targets.protein_g, shares);
+  const carbs = split(targets.carbs_g, shares);
+  const fat = split(targets.fat_g, shares);
+
+  const meals = MEAL_SLOTS.slice(0, count).map((slot, i) => ({
+    name: slot.name,
+    time: slot.time,
+    calories: calories[i],
+    protein_g: protein[i],
+    carbs_g: carbs[i],
+    fat_g: fat[i],
+    items: slot.items,
   }));
 
   return {

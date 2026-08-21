@@ -1,0 +1,44 @@
+"use client";
+
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+type Props = {
+  id: string;
+  name: string;
+  options: Record<string, string>;
+  placeholder?: string;
+  defaultValue?: string;
+};
+
+// The native <select> hands its popup to the operating system, which paints and
+// positions it however it likes. This one is ours, so it follows the app's
+// palette on every platform. It still posts through a hidden input, so server
+// actions read it exactly like the native element they replaced.
+export function FormSelect({
+  id,
+  name,
+  options,
+  placeholder = "—",
+  defaultValue,
+}: Props) {
+  return (
+    <Select name={name} defaultValue={defaultValue}>
+      <SelectTrigger id={id} className="w-full">
+        <SelectValue placeholder={placeholder} />
+      </SelectTrigger>
+      <SelectContent>
+        {Object.entries(options).map(([value, label]) => (
+          <SelectItem key={value} value={value}>
+            {label}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+}

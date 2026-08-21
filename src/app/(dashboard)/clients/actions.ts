@@ -45,6 +45,39 @@ export async function createClientRecord(formData: FormData) {
   redirect(`/clients/${data.id}`);
 }
 
+// Same field set as creating a client, so a trainer can correct anything they
+// typed in a hurry. Row level security scopes the update to their own clients,
+// so the id coming from the form cannot reach someone else's record.
+export async function updateClientRecord(clientId: string, formData: FormData) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) redirect("/login");
+
+  const { error } = await supabase
+    .from("clients")
+    .update({
+      full_name: String(formData.get("full_name")).trim(),
+      email: optional(formData.get("email")),
+      phone: optional(formData.get("phone")),
+      sex: optional(formData.get("sex")),
+      birth_date: optional(formData.get("birth_date")),
+      height_cm: optionalNumber(formData.get("height_cm")),
+      goal: optional(formData.get("goal")),
+      activity: optional(formData.get("activity")),
+      notes: optional(formData.get("notes")),
+    })
+    .eq("id", clientId);
+
+  if (error) throw new Error(error.message);
+
+  revalidatePath("/clients");
+  revalidatePath(`/clients/${clientId}`);
+  redirect(`/clients/${clientId}`);
+}
+
 export async function addMetric(clientId: string, formData: FormData) {
   const supabase = await createClient();
 

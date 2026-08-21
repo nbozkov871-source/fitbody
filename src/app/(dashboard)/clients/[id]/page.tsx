@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Sparkles } from "lucide-react";
+import { Pencil, Sparkles } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
@@ -104,6 +104,13 @@ export default async function ClientDetailPage({
             <Badge variant={client.status === "active" ? "default" : "secondary"}>
               {STATUS_LABELS[client.status]}
             </Badge>
+            <Button
+              variant="outline"
+              render={<Link href={`/clients/${client.id}/edit`} />}
+            >
+              <Pencil className="size-4" />
+              Редактирай
+            </Button>
             <Button render={<Link href={`/clients/${client.id}/plan/new`} />}>
               <Sparkles className="size-4" />
               Генерирай план

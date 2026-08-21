@@ -158,7 +158,11 @@
   body {
     @apply bg-background text-foreground;
   }
+  /* color-scheme tells the browser to paint native controls — select popups,
+     date pickers, scrollbars — for a dark page. Without it a select's options
+     came out as white text on a white popup. */
   html {
     @apply font-sans;
+    color-scheme: dark;
   }
 }
