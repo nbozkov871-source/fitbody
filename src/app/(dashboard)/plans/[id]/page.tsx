@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Pencil } from "lucide-react";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { PageHeader } from "@/components/page-header";
@@ -10,6 +11,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Table,
   TableBody,
@@ -70,6 +72,13 @@ export default async function PlanDetailPage({
             <Badge variant={plan.status === "active" ? "default" : "secondary"}>
               {STATUS_LABELS[plan.status]}
             </Badge>
+            <Button
+              variant="outline"
+              render={<Link href={`/plans/${plan.id}/edit`} />}
+            >
+              <Pencil className="size-4" />
+              Редактирай
+            </Button>
             <PlanStatusActions planId={plan.id} status={plan.status} />
           </div>
         }

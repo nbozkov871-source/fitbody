@@ -3,7 +3,7 @@
 import { useTransition } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { setPlanStatus } from "@/app/(dashboard)/clients/[id]/plan/new/actions";
+import { setPlanStatus } from "../actions";
 
 export function PlanStatusActions({
   planId,

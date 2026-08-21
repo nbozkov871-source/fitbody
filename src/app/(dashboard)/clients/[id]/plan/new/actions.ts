@@ -54,16 +54,3 @@ export async function generatePlan(clientId: string, formData: FormData) {
   revalidatePath(`/clients/${clientId}`);
   redirect(`/plans/${data.id}`);
 }
-
-export async function setPlanStatus(planId: string, status: string) {
-  const supabase = await createClient();
-
-  const { error } = await supabase
-    .from("nutrition_plans")
-    .update({ status })
-    .eq("id", planId);
-
-  if (error) throw new Error(error.message);
-
-  revalidatePath(`/plans/${planId}`);
-}
