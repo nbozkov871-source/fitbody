@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Pencil, Sparkles } from "lucide-react";
+import { Pencil, Ruler, Sparkles } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
@@ -110,6 +110,13 @@ export default async function ClientDetailPage({
             >
               <Pencil className="size-4" />
               Редактирай
+            </Button>
+            <Button
+              variant="outline"
+              render={<Link href={`/clients/${client.id}/measurements`} />}
+            >
+              <Ruler className="size-4" />
+              Измервания
             </Button>
             <Button render={<Link href={`/clients/${client.id}/plan/new`} />}>
               <Sparkles className="size-4" />

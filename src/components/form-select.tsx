@@ -14,6 +14,8 @@ type Props = {
   options: Record<string, string>;
   placeholder?: string;
   defaultValue?: string;
+  /** For the cases where the surrounding page reacts to the choice. */
+  onValueChange?: (value: string) => void;
 };
 
 // The native <select> hands its popup to the operating system, which paints and
@@ -26,9 +28,14 @@ export function FormSelect({
   options,
   placeholder = "—",
   defaultValue,
+  onValueChange,
 }: Props) {
   return (
-    <Select name={name} defaultValue={defaultValue}>
+    <Select
+      name={name}
+      defaultValue={defaultValue}
+      onValueChange={(value) => onValueChange?.(String(value ?? ""))}
+    >
       <SelectTrigger id={id} className="w-full">
         <SelectValue placeholder={placeholder} />
       </SelectTrigger>

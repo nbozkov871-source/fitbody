@@ -108,3 +108,25 @@ export const SEX_LABELS: Record<Sex, string> = {
   male: "Мъж",
   female: "Жена",
 };
+
+export type MeasurementSession = {
+  id: string;
+  client_id: string;
+  measured_by: string | null;
+  measured_at: string;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type SkinfoldMeasurement = {
+  id: string;
+  session_id: string;
+  site: string;
+  value_mm: number;
+};
+
+/** A session with its readings, as the pages consume it. */
+export type SessionWithSkinfolds = MeasurementSession & {
+  skinfold_measurements: SkinfoldMeasurement[];
+};

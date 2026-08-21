@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Users, UserCheck, Utensils, Plus } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { PageHeader } from "@/components/page-header";
+import { formatMm } from "@/lib/measurements";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -31,6 +32,14 @@ export default async function DashboardPage() {
         .select("*", { count: "exact", head: true }),
     ]);
 
+  // The two most recent sessions across this trainer's clients, so the card can
+  // show the latest total and how it moved.
+  const { data: latestSessions } = await supabase
+    .from("measurement_sessions")
+    .select("id, client_id, measured_at, skinfold_measurements(value_mm), clients(full_name)")
+    .order("measured_at", { ascending: false })
+    .limit(2);
+
   const { data: recentClients } = await supabase
     .from("clients")
     .select("id, full_name, goal, status, created_at")
@@ -44,6 +53,29 @@ export default async function DashboardPage() {
     { label: "Хранителни планове", value: plans ?? 0, icon: Utensils },
   ];
 
+  const sessionTotals = (latestSessions ?? []).map((row) => ({
+    id: row.id as string,
+    clientId: row.client_id as string,
+    // The embed comes back as an array even for a single parent row.
+    clientName:
+      ([row.clients].flat()[0] as { full_name: string } | undefined)
+        ?.full_name ?? "Клиент",
+    date: row.measured_at as string,
+    total: (row.skinfold_measurements ?? []).reduce(
+      (sum: number, r: { value_mm: number }) => sum + Number(r.value_mm),
+      0,
+    ),
+  }));
+
+  const latestMeasurement = sessionTotals[0]
+    ? {
+        ...sessionTotals[0],
+        change: sessionTotals[1]
+          ? sessionTotals[0].total - sessionTotals[1].total
+          : null,
+      }
+    : null;
+
   return (
     <>
       <PageHeader
@@ -56,6 +88,47 @@ export default async function DashboardPage() {
           </Button>
         }
       />
+
+      {latestMeasurement && (
+        <div className="px-6 pt-6">
+          <Card>
+            <CardHeader className="flex-row items-start justify-between gap-4 space-y-0">
+              <div>
+                <CardDescription>Последно измерване</CardDescription>
+                <CardTitle className="mt-1 text-3xl tabular-nums">
+                  {formatMm(latestMeasurement.total)}
+                  <span className="ml-1 text-base font-normal text-muted-foreground">
+                    mm
+                  </span>
+                </CardTitle>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                render={
+                  <Link
+                    href={`/clients/${latestMeasurement.clientId}/measurements`}
+                  />
+                }
+              >
+                Виж всички измервания
+              </Button>
+            </CardHeader>
+            <CardContent className="text-sm text-muted-foreground">
+              {latestMeasurement.clientName} · {latestMeasurement.date}
+              {latestMeasurement.change !== null && (
+                <>
+                  {" · спрямо предходното: "}
+                  <span className="tabular-nums">
+                    {latestMeasurement.change > 0 ? "+" : ""}
+                    {formatMm(latestMeasurement.change)} mm
+                  </span>
+                </>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       <div className="grid gap-4 p-6 sm:grid-cols-3">
         {stats.map(({ label, value, icon: Icon }) => (
