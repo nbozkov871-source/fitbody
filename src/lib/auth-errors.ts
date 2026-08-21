@@ -16,6 +16,8 @@ const BY_CODE: Record<string, string> = {
   weak_password: "Паролата е твърде проста. Използвайте поне 8 знака.",
   signup_disabled: "Регистрациите са спрени в момента.",
   validation_failed: "Проверете дали имейлът е изписан правилно.",
+  provider_disabled:
+    "Входът с Google не е включен за този проект. Включете го от Supabase → Authentication → Sign In / Providers.",
 };
 
 // Older releases send the text without a code, so match on the message too.
@@ -32,6 +34,10 @@ const BY_TEXT: [RegExp, string][] = [
   [/already registered|already exists/i, "Вече има акаунт с този имейл. Влезте вместо това."],
   [/password should be at least/i, "Паролата е твърде къса. Използвайте поне 8 знака."],
   [/unable to validate email|invalid format|is invalid/i, "Проверете дали имейлът е изписан правилно."],
+  [
+    /unsupported provider|provider is not enabled/i,
+    "Входът с Google не е включен за този проект. Включете го от Supabase → Authentication → Sign In / Providers.",
+  ],
   [/failed to fetch|network/i, "Няма връзка със сървъра. Проверете интернет връзката си."],
 ];
 

@@ -14,6 +14,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { GoogleButton } from "@/components/google-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
@@ -62,6 +63,14 @@ function LoginForm() {
           Влезте в своя акаунт, за да управлявате клиентите си.
         </CardDescription>
       </CardHeader>
+      <CardContent className="grid gap-4 pb-0">
+        <GoogleButton next="/dashboard" label="Вход с Google" />
+        <div className="flex items-center gap-3 text-xs text-muted-foreground">
+          <span className="h-px flex-1 bg-border" />
+          или с имейл
+          <span className="h-px flex-1 bg-border" />
+        </div>
+      </CardContent>
       <form onSubmit={handleSubmit}>
         <CardContent className="grid gap-4">
           <div className="grid gap-2">
