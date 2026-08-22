@@ -176,11 +176,28 @@ function ageOn(birthDate: string, on: string) {
 }
 
 function env(name: string) {
+  // The leading mark is stripped for the same reason the app strips it: an
+  // editor can add one invisibly and it then travels into an HTTP header.
   const value = (process.env[name] ?? "").replace(/^﻿/, "").trim();
+
   if (!value) {
-    console.error(`\nЛипсва ${name} в .env.local.\n`);
+    console.error("");
+    console.error(`Липсва ${name} в .env.local.`);
+    console.error("");
     process.exit(1);
   }
+
+  // A value copied out of the instructions rather than out of the dashboard
+  // still reaches Supabase, which answers "Invalid API key" — a message that
+  // says nothing about where the mistake actually was.
+  if (value.includes("...") || value.includes("your-") || value.endsWith("_")) {
+    console.error("");
+    console.error(`${name} съдържа примерна стойност, а не истинска.`);
+    console.error("Копирайте я от Supabase → Settings → API Keys.");
+    console.error("");
+    process.exit(1);
+  }
+
   return value;
 }
 
