@@ -317,8 +317,16 @@ export default function Home() {
       </main>
 
       <footer className="border-t border-[var(--line-dark)]">
-        <div className="mx-auto w-full max-w-6xl px-6 py-8 text-sm text-[var(--ash)]">
-          FitBody — CRM и хранителни режими за фитнес треньори
+        <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-4 px-6 py-8 text-sm text-[var(--ash)]">
+          <span>FitBody — CRM и хранителни режими за фитнес треньори</span>
+          <nav className="flex gap-6">
+            <Link href="/privacy" className={`hover:text-[var(--bone)] ${focusDark}`}>
+              Поверителност
+            </Link>
+            <Link href="/terms" className={`hover:text-[var(--bone)] ${focusDark}`}>
+              Условия
+            </Link>
+          </nav>
         </div>
       </footer>
     </div>

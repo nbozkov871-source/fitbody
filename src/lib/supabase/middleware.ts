@@ -2,7 +2,16 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { supabaseEnv } from "./env";
 
-const PUBLIC_ROUTES = ["/", "/login", "/register", "/auth"];
+// The policy pages have to be readable before signing up, and Google's consent
+// screen fetches them from outside the app entirely.
+const PUBLIC_ROUTES = [
+  "/",
+  "/login",
+  "/register",
+  "/auth",
+  "/privacy",
+  "/terms",
+];
 
 export async function updateSession(request: NextRequest) {
   let response = NextResponse.next({ request });
