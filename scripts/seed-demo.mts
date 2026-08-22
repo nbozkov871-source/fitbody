@@ -22,8 +22,12 @@ import {
 } from "../src/lib/nutrition.ts";
 import { MEASUREMENT_SITES } from "../src/lib/measurements.ts";
 
-// Fixed ids are what make the script idempotent. They are deliberately
-// recognisable, so anyone looking at the database can tell demo rows apart.
+// Fixed ids are what make the script idempotent, and they are the only marker
+// that these rows are demo data. Nothing on the surface says so on purpose:
+// a prospect being shown the app should see a client record, not a sample.
+//
+// The addresses use example.com because IANA reserves it and nobody can ever
+// register it, so a future invite feature cannot mail a stranger by accident.
 const DEMO_CLIENT_IDS = {
   loseFat: "dedcafe0-0000-4000-8000-000000000001",
   gainMuscle: "dedcafe0-0000-4000-8000-000000000002",
@@ -72,14 +76,14 @@ const PEOPLE: Profile[] = [
     id: "loseFat",
     clientId: DEMO_CLIENT_IDS.loseFat,
     full_name: "Мария Петрова",
-    email: "demo.maria@fitbody.local",
+    email: "m.petrova@example.com",
     phone: "+359 88 000 0001",
     sex: "female",
     birth_date: "1991-04-18",
     height_cm: 168,
     goal: "lose_fat",
     activity: "moderate",
-    notes: "Демо клиент. Тренира 3 пъти седмично, седяща работа. Без алергии.",
+    notes: "Тренира 3 пъти седмично. Седяща работа, ходи пеша до офиса. Без алергии. Предпочита да не се храни рано сутрин.",
     start: { weight: 78.4, waist: 92, bodyFat: 31.5, chest: 98, hips: 106, arm: 30, thigh: 61 },
     weekly: { weight: -0.7, waist: -1.0, bodyFat: -0.6, chest: -0.45, hips: -0.7, arm: -0.12, thigh: -0.4 },
     skinfoldStart: {
@@ -93,14 +97,14 @@ const PEOPLE: Profile[] = [
     id: "gainMuscle",
     clientId: DEMO_CLIENT_IDS.gainMuscle,
     full_name: "Георги Стоянов",
-    email: "demo.georgi@fitbody.local",
+    email: "g.stoyanov@example.com",
     phone: "+359 88 000 0002",
     sex: "male",
     birth_date: "1997-09-05",
     height_cm: 181,
     goal: "gain_muscle",
     activity: "active",
-    notes: "Демо клиент. Тренира 4 пъти седмично, силова програма. Не яде риба.",
+    notes: "Силова програма, 4 пъти седмично. Не яде риба. Стара травма в лявото рамо — без набирания над глава.",
     start: { weight: 72.1, waist: 79, bodyFat: 14.2, chest: 96, hips: 94, arm: 32, thigh: 55 },
     // Gaining is slower than losing, and some of it is not muscle.
     weekly: { weight: 0.32, waist: 0.1, bodyFat: 0.08, chest: 0.35, hips: 0.1, arm: 0.18, thigh: 0.25 },
