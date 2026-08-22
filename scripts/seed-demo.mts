@@ -26,8 +26,14 @@ import { MEASUREMENT_SITES } from "../src/lib/measurements.ts";
 // that these rows are demo data. Nothing on the surface says so on purpose:
 // a prospect being shown the app should see a client record, not a sample.
 //
-// The addresses use example.com because IANA reserves it and nobody can ever
-// register it, so a future invite feature cannot mail a stranger by accident.
+// The contact details are made to look ordinary, because a prospect being shown
+// the app should see a client record rather than a sample.
+//
+// That means the addresses are on a live domain and may well belong to real
+// people, and the numbers may be assigned. Nothing sends to a client today.
+// Before anything does — a client invite, a reminder — either point these back
+// at example.com, which nobody can register, or skip any client whose id is in
+// DEMO_CLIENT_IDS.
 const DEMO_CLIENT_IDS = {
   loseFat: "dedcafe0-0000-4000-8000-000000000001",
   gainMuscle: "dedcafe0-0000-4000-8000-000000000002",
@@ -76,8 +82,8 @@ const PEOPLE: Profile[] = [
     id: "loseFat",
     clientId: DEMO_CLIENT_IDS.loseFat,
     full_name: "Мария Петрова",
-    email: "m.petrova@example.com",
-    phone: "+359 88 000 0001",
+    email: "mariya.petrova91@gmail.com",
+    phone: "+359 88 431 7062",
     sex: "female",
     birth_date: "1991-04-18",
     height_cm: 168,
@@ -97,8 +103,8 @@ const PEOPLE: Profile[] = [
     id: "gainMuscle",
     clientId: DEMO_CLIENT_IDS.gainMuscle,
     full_name: "Георги Стоянов",
-    email: "g.stoyanov@example.com",
-    phone: "+359 88 000 0002",
+    email: "g.stoyanov.fit@gmail.com",
+    phone: "+359 87 962 4185",
     sex: "male",
     birth_date: "1997-09-05",
     height_cm: 181,

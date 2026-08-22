@@ -23,10 +23,13 @@ const GOAL_MACRO_SPLIT: Record<
   { proteinPerKg: number; fatPerKg: number }
 > = {
   lose_fat: { proteinPerKg: 2.2, fatPerKg: 0.8 },
-  gain_muscle: { proteinPerKg: 1.8, fatPerKg: 1.0 },
+  gain_muscle: { proteinPerKg: 2.0, fatPerKg: 1.0 },
   maintain: { proteinPerKg: 1.6, fatPerKg: 1.0 },
   recomposition: { proteinPerKg: 2.0, fatPerKg: 0.9 },
 };
+
+/** Fat below roughly a quarter of the day is hard to eat well and hard to keep to. */
+const MIN_FAT_SHARE = 0.25;
 
 export type PlanInput = {
   sex: Sex;
@@ -61,7 +64,14 @@ export function calculateTargets(input: PlanInput): PlanTargets {
 
   const { proteinPerKg, fatPerKg } = GOAL_MACRO_SPLIT[input.goal];
   const protein_g = Math.round(input.weight_kg * proteinPerKg);
-  const fat_g = Math.round(input.weight_kg * fatPerKg);
+
+  // Fat set per kilo alone falls below a workable share once calories climb,
+  // and carbohydrate — which takes whatever is left — absorbs the difference.
+  // A floor as a share of the day keeps a surplus from turning into a plate of
+  // almost nothing but carbohydrate.
+  const fatFloor = (calories * MIN_FAT_SHARE) / 9;
+  const fat_g = Math.round(Math.max(input.weight_kg * fatPerKg, fatFloor));
+
   const carbs_g = Math.max(
     0,
     Math.round((calories - protein_g * 4 - fat_g * 9) / 4),

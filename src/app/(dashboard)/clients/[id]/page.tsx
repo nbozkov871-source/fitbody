@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Pencil, Ruler, Sparkles } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
+import { LineChart } from "@/components/line-chart";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
 import {
@@ -71,6 +72,8 @@ export default async function ClientDetailPage({
   ]);
 
   const latest = metrics?.[0];
+  // The table reads newest first; a chart has to run the other way.
+  const trend = [...(metrics ?? [])].reverse();
   const clientAge = age(client.birth_date);
 
   const details = [
@@ -164,6 +167,42 @@ export default async function ClientDetailPage({
           </TabsContent>
 
           <TabsContent value="metrics" className="mt-6 grid gap-4 lg:grid-cols-3">
+            {trend.length >= 2 && (
+              <Card className="lg:col-span-3">
+                <CardHeader>
+                  <CardTitle>Тегло и талия във времето</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <LineChart
+                    series={[
+                      {
+                        label: "Тегло",
+                        unit: "кг",
+                        colour: "var(--primary)",
+                        points: trend
+                          .filter((m) => m.weight_kg !== null)
+                          .map((m) => ({
+                            date: m.measured_at,
+                            value: Number(m.weight_kg),
+                          })),
+                      },
+                      {
+                        label: "Талия",
+                        unit: "см",
+                        colour: "var(--chart-2)",
+                        points: trend
+                          .filter((m) => m.waist_cm !== null)
+                          .map((m) => ({
+                            date: m.measured_at,
+                            value: Number(m.waist_cm),
+                          })),
+                      },
+                    ]}
+                  />
+                </CardContent>
+              </Card>
+            )}
+
             <Card className="lg:col-span-2">
               <CardHeader>
                 <CardTitle>История на измерванията</CardTitle>
