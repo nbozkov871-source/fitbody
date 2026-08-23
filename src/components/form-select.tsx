@@ -33,6 +33,9 @@ export function FormSelect({
   return (
     <Select
       name={name}
+      // Without this the trigger falls back to printing the raw value, so the
+      // closed field would read "gain_muscle" instead of the human label.
+      items={options}
       defaultValue={defaultValue}
       onValueChange={(value) => onValueChange?.(String(value ?? ""))}
     >
