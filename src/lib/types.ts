@@ -33,6 +33,9 @@ export type Client = {
   activity: ActivityLevel | null;
   status: ClientStatus;
   notes: string | null;
+  // Set when the trainer deletes the client. The row stays put so the deletion
+  // can be undone; every list filters it out.
+  deleted_at: string | null;
   created_at: string;
   updated_at: string;
 };

@@ -6,7 +6,12 @@ import { FormSelect } from "@/components/form-select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { ACTIVITY_LABELS, GOAL_LABELS, SEX_LABELS } from "@/lib/types";
+import {
+  ACTIVITY_LABELS,
+  GOAL_LABELS,
+  SEX_LABELS,
+  STATUS_LABELS,
+} from "@/lib/types";
 import type { Client } from "@/lib/types";
 
 type Props = {
@@ -121,6 +126,20 @@ export function ClientForm({
                   />
                 </div>
               </div>
+
+              {/* A client is active the moment they are created, so the field
+                  only earns its place once there is something to change. */}
+              {client ? (
+                <div className="grid gap-2 sm:max-w-xs">
+                  <Label htmlFor="status">Статус</Label>
+                  <FormSelect
+                    id="status"
+                    name="status"
+                    options={STATUS_LABELS}
+                    defaultValue={client.status}
+                  />
+                </div>
+              ) : null}
 
               <div className="grid gap-2">
                 <Label htmlFor="notes">Бележки</Label>

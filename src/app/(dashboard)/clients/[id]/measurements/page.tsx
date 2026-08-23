@@ -29,6 +29,7 @@ export default async function MeasurementsPage({
     .from("clients")
     .select("id, full_name")
     .eq("id", id)
+    .is("deleted_at", null)
     .maybeSingle();
 
   if (!client) notFound();

@@ -22,11 +22,15 @@ export default async function DashboardPage() {
 
   const [{ count: totalClients }, { count: activeClients }, { count: plans }] =
     await Promise.all([
-      supabase.from("clients").select("*", { count: "exact", head: true }),
       supabase
         .from("clients")
         .select("*", { count: "exact", head: true })
-        .eq("status", "active"),
+        .is("deleted_at", null),
+      supabase
+        .from("clients")
+        .select("*", { count: "exact", head: true })
+        .eq("status", "active")
+        .is("deleted_at", null),
       supabase
         .from("nutrition_plans")
         .select("*", { count: "exact", head: true }),
@@ -44,6 +48,7 @@ export default async function DashboardPage() {
     .from("clients")
     .select("id, full_name, goal, status, created_at")
     .eq("trainer_id", user!.id)
+    .is("deleted_at", null)
     .order("created_at", { ascending: false })
     .limit(5);
 

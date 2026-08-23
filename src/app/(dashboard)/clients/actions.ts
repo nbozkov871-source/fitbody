@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { STATUS_LABELS, type ClientStatus } from "@/lib/types";
 
 function optional(value: FormDataEntryValue | null) {
   const trimmed = String(value ?? "").trim();
@@ -12,6 +13,15 @@ function optional(value: FormDataEntryValue | null) {
 function optionalNumber(value: FormDataEntryValue | null) {
   const trimmed = String(value ?? "").trim();
   return trimmed === "" ? null : Number(trimmed);
+}
+
+// The status arrives as a plain string from a form, so it is checked against
+// the values the database enum accepts rather than trusted. Anything else — an
+// absent field on a form that does not carry one — leaves the stored status
+// alone rather than quietly reactivating someone who was paused.
+function readStatus(value: FormDataEntryValue | null): ClientStatus | undefined {
+  const raw = String(value ?? "");
+  return raw in STATUS_LABELS ? (raw as ClientStatus) : undefined;
 }
 
 export async function createClientRecord(formData: FormData) {
@@ -67,6 +77,7 @@ export async function updateClientRecord(clientId: string, formData: FormData) {
       height_cm: optionalNumber(formData.get("height_cm")),
       goal: optional(formData.get("goal")),
       activity: optional(formData.get("activity")),
+      status: readStatus(formData.get("status")),
       notes: optional(formData.get("notes")),
     })
     .eq("id", clientId);
@@ -97,4 +108,67 @@ export async function addMetric(clientId: string, formData: FormData) {
   if (error) throw new Error(error.message);
 
   revalidatePath(`/clients/${clientId}`);
+}
+
+/**
+ * Flips a client between active, paused and archived without walking through
+ * the whole edit form — the switch on the client's page calls this directly.
+ */
+export async function setClientStatus(clientId: string, status: ClientStatus) {
+  const supabase = await createClient();
+
+  if (!(status in STATUS_LABELS)) {
+    throw new Error("Непознат статус.");
+  }
+
+  const { error } = await supabase
+    .from("clients")
+    .update({ status })
+    .eq("id", clientId)
+    .is("deleted_at", null);
+
+  if (error) throw new Error(error.message);
+
+  revalidatePath("/clients");
+  revalidatePath(`/clients/${clientId}`);
+  revalidatePath("/dashboard");
+}
+
+/**
+ * Deleting a client marks the row rather than removing it. Everything the
+ * trainer recorded — caliper sessions, tape readings, plans — hangs off this
+ * row with `on delete cascade`, so a real delete would quietly take months of
+ * history with it and leave nothing to apologise with. The client drops out of
+ * every list and waits in the bin instead.
+ */
+export async function softDeleteClient(clientId: string) {
+  const supabase = await createClient();
+
+  const { error } = await supabase
+    .from("clients")
+    .update({ deleted_at: new Date().toISOString() })
+    .eq("id", clientId);
+
+  if (error) throw new Error(error.message);
+
+  revalidatePath("/clients");
+  revalidatePath(`/clients/${clientId}`);
+  revalidatePath("/dashboard");
+  redirect("/clients?view=trash");
+}
+
+/** Undoes the above, with the client's history untouched. */
+export async function restoreClient(clientId: string) {
+  const supabase = await createClient();
+
+  const { error } = await supabase
+    .from("clients")
+    .update({ deleted_at: null })
+    .eq("id", clientId);
+
+  if (error) throw new Error(error.message);
+
+  revalidatePath("/clients");
+  revalidatePath(`/clients/${clientId}`);
+  revalidatePath("/dashboard");
 }

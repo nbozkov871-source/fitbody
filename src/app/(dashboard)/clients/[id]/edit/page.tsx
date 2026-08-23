@@ -14,6 +14,7 @@ export default async function EditClientPage({
     .from("clients")
     .select("*")
     .eq("id", id)
+    .is("deleted_at", null)
     .single();
 
   if (!data) notFound();

@@ -23,11 +23,12 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { AddMetricForm } from "./add-metric-form";
+import { DeleteClient } from "./delete-client";
+import { StatusControl } from "./status-control";
 import {
   ACTIVITY_LABELS,
   GOAL_LABELS,
   SEX_LABELS,
-  STATUS_LABELS,
   type ActivityLevel,
   type Client,
   type ClientMetric,
@@ -53,6 +54,9 @@ export default async function ClientDetailPage({
     .from("clients")
     .select("*")
     .eq("id", id)
+    // A deleted client waits in the bin; its pages stay out of reach until it
+    // is restored.
+    .is("deleted_at", null)
     .single<Client>();
 
   if (!client) notFound();
@@ -121,9 +125,7 @@ export default async function ClientDetailPage({
         }
         action={
           <div className="flex items-center gap-3">
-            <Badge variant={client.status === "active" ? "default" : "secondary"}>
-              {STATUS_LABELS[client.status]}
-            </Badge>
+            <StatusControl clientId={client.id} status={client.status} />
             <Button
               variant="outline"
               render={<Link href={`/clients/${client.id}/edit`} />}
@@ -142,6 +144,7 @@ export default async function ClientDetailPage({
               <Sparkles className="size-4" />
               Генерирай план
             </Button>
+            <DeleteClient clientId={client.id} fullName={client.full_name} />
           </div>
         }
       />

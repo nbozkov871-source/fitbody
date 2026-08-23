@@ -29,6 +29,7 @@ async function requireOwnedClient(clientId: string) {
     .select("id")
     .eq("id", clientId)
     .eq("trainer_id", user.id)
+    .is("deleted_at", null)
     .maybeSingle();
 
   if (!client) {

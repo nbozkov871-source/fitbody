@@ -37,6 +37,7 @@ export default async function MeasurementDetailPage({
     .from("clients")
     .select("*")
     .eq("id", id)
+    .is("deleted_at", null)
     .maybeSingle<Client>();
 
   const values = toValues(data);

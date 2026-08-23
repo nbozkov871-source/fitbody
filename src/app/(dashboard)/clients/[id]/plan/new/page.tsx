@@ -41,6 +41,7 @@ export default async function NewPlanPage({
     .from("clients")
     .select("*")
     .eq("id", id)
+    .is("deleted_at", null)
     .single<Client>();
 
   if (!client) notFound();
