@@ -115,3 +115,86 @@ test("no two meals are identical, the way an even split would make them", () => 
   const calories = plan.meals.map((m) => m.calories);
   assert.ok(new Set(calories).size > 1, `всички хранения са ${calories[0]} kcal`);
 });
+
+// The cases below are the ones that were wrong: a heavier client asking to lose
+// weight got almost no carbohydrate, because protein was set against total body
+// weight and the fat floor took the rest.
+
+const HEAVY_LOSERS: [string, PlanInput][] = [
+  [
+    "жена 100 кг",
+    { ...BASE, sex: "female", age: 30, height_cm: 160, weight_kg: 100, activity: "sedentary", goal: "lose_fat" },
+  ],
+  [
+    "мъж 95 кг",
+    { ...BASE, sex: "male", age: 70, height_cm: 172, weight_kg: 95, activity: "sedentary", goal: "lose_fat" },
+  ],
+  [
+    "жена 90 кг, рекомпозиция",
+    { ...BASE, sex: "female", age: 33, height_cm: 165, weight_kg: 90, activity: "moderate", goal: "recomposition" },
+  ],
+];
+
+test("carbohydrate keeps a real share, even for a heavy client losing weight", () => {
+  for (const [label, input] of HEAVY_LOSERS) {
+    const s = shares(input);
+    assert.ok(
+      s.carbShare >= 0.15,
+      `${label}: въглехидрати ${(s.carbShare * 100).toFixed(0)}% (${s.carbs_g} г)`,
+    );
+  }
+});
+
+test("no plan asks anyone to eat below their resting need", () => {
+  for (const goal of GOALS) {
+    for (const [label, input] of HEAVY_LOSERS) {
+      const t = calculateTargets({ ...input, goal });
+      assert.ok(t.calories >= t.bmr, `${label}/${goal}: ${t.calories} под BMR ${t.bmr}`);
+    }
+  }
+
+  // A small, older, sedentary client is where the deficit used to cut deepest.
+  const small = calculateTargets({
+    ...BASE,
+    sex: "female",
+    age: 65,
+    height_cm: 160,
+    weight_kg: 58,
+    activity: "sedentary",
+    goal: "lose_fat",
+  });
+  assert.ok(small.calories >= small.bmr, `${small.calories} под BMR ${small.bmr}`);
+  assert.ok(small.calories >= 1200, `${small.calories} под приетия минимум за жена`);
+});
+
+test("protein is set against a reference weight when there is fat to lose", () => {
+  // 160 cm puts a BMI of 25 at 64 kg, so 100 kg should not drive the protein.
+  const heavy = calculateTargets({
+    ...BASE,
+    sex: "female",
+    age: 30,
+    height_cm: 160,
+    weight_kg: 100,
+    activity: "sedentary",
+    goal: "lose_fat",
+  });
+  assert.ok(
+    heavy.protein_g < 100 * 2.2,
+    `${heavy.protein_g} г е смятан на пълното тегло`,
+  );
+  assert.ok(heavy.protein_g > 120, `${heavy.protein_g} г е твърде малко`);
+});
+
+test("a heavy client who is gaining keeps protein on their actual weight", () => {
+  // Capping here would starve the protein someone training to gain is eating for.
+  const lifter = calculateTargets({
+    ...BASE,
+    sex: "male",
+    age: 26,
+    height_cm: 180,
+    weight_kg: 100,
+    activity: "active",
+    goal: "gain_muscle",
+  });
+  assert.equal(lifter.protein_g, Math.round(100 * 2.0));
+});

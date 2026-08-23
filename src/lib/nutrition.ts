@@ -31,6 +31,9 @@ const GOAL_MACRO_SPLIT: Record<
 /** Fat below roughly a quarter of the day is hard to eat well and hard to keep to. */
 const MIN_FAT_SHARE = 0.25;
 
+/** No plan drops under these, whatever the arithmetic above them says. */
+const MIN_CALORIES: Record<Sex, number> = { male: 1500, female: 1200 };
+
 export type PlanInput = {
   sex: Sex;
   age: number;
@@ -51,6 +54,32 @@ export type PlanTargets = {
   carbs_g: number;
 };
 
+/**
+ * The weight the macros are set against.
+ *
+ * Grams per kilogram of total body weight over-prescribes for a client carrying
+ * a lot of fat: fat tissue does not need feeding in proportion. At 100 kg and
+ * 160 cm the protein alone came to 220 g, which with the fat floor left six
+ * grams of carbohydrate in the day — a near-ketogenic plan produced by
+ * accident, for the most ordinary client this app has.
+ *
+ * So above a BMI of 25 the macros are set against the weight that BMI would
+ * put the client at. Only for losing and recomposition: a heavy client working
+ * to gain is likelier to be carrying muscle, and capping them would starve the
+ * protein they are training for.
+ */
+function referenceWeight(input: PlanInput): number {
+  if (input.goal !== "lose_fat" && input.goal !== "recomposition") {
+    return input.weight_kg;
+  }
+
+  const metres = input.height_cm / 100;
+  if (metres <= 0) return input.weight_kg;
+
+  const atBmi25 = 25 * metres * metres;
+  return Math.min(input.weight_kg, atBmi25);
+}
+
 export function calculateTargets(input: PlanInput): PlanTargets {
   const base =
     10 * input.weight_kg +
@@ -60,17 +89,22 @@ export function calculateTargets(input: PlanInput): PlanTargets {
 
   const bmr = Math.round(base);
   const tdee = Math.round(bmr * ACTIVITY_MULTIPLIERS[input.activity]);
-  const calories = Math.round(tdee * GOAL_CALORIE_FACTOR[input.goal]);
+  const target = Math.round(tdee * GOAL_CALORIE_FACTOR[input.goal]);
+
+  // A deficit taken off a small maintenance lands under what the body burns at
+  // rest, and no plan should ask that. The floor is whichever is higher: resting
+  // need, or the accepted minimum for the sex.
+  const calories = Math.max(target, bmr, MIN_CALORIES[input.sex]);
 
   const { proteinPerKg, fatPerKg } = GOAL_MACRO_SPLIT[input.goal];
-  const protein_g = Math.round(input.weight_kg * proteinPerKg);
+  const reference = referenceWeight(input);
+
+  const protein_g = Math.round(reference * proteinPerKg);
 
   // Fat set per kilo alone falls below a workable share once calories climb,
   // and carbohydrate — which takes whatever is left — absorbs the difference.
-  // A floor as a share of the day keeps a surplus from turning into a plate of
-  // almost nothing but carbohydrate.
   const fatFloor = (calories * MIN_FAT_SHARE) / 9;
-  const fat_g = Math.round(Math.max(input.weight_kg * fatPerKg, fatFloor));
+  const fat_g = Math.round(Math.max(reference * fatPerKg, fatFloor));
 
   const carbs_g = Math.max(
     0,
