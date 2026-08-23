@@ -7,6 +7,10 @@ import {
   sumSkinfolds,
   validateSkinfolds,
   calculateBodyFat,
+  CIRCUMFERENCE_SITES,
+  MAX_CM,
+  MIN_CM,
+  validateCircumferences,
 } from "./measurements.ts";
 
 function raw(values: Record<string, string>) {
@@ -94,4 +98,53 @@ test("body fat reports nothing while no methodology is registered", () => {
 test("every site is uniquely identified", () => {
   const ids = MEASUREMENT_SITES.map((s) => s.id);
   assert.equal(new Set(ids).size, ids.length);
+});
+
+// --- Circumferences ---------------------------------------------------------
+
+function rawCm(values: Record<string, string>) {
+  const all: Record<string, string> = {};
+  for (const site of CIRCUMFERENCE_SITES) all[site.id] = values[site.id] ?? "";
+  return all;
+}
+
+test("accepts tape readings inside range", () => {
+  const result = validateCircumferences(rawCm({ waist: "92", neck: "34.5" }));
+  assert.equal(result.ok, true);
+  assert.deepEqual(result.ok && result.values, { neck: 34.5, waist: 92 });
+});
+
+test("a site nobody measured is absent, not zero", () => {
+  const result = validateCircumferences(rawCm({ waist: "92" }));
+  assert.equal(result.ok && "neck" in result.values, false);
+});
+
+test("refuses text and readings outside tape range", () => {
+  for (const value of ["abc", "-5", "0", String(MAX_CM + 1), String(MIN_CM - 1)]) {
+    const result = validateCircumferences(rawCm({ waist: value }));
+    assert.equal(result.ok, false, `${value} трябваше да бъде отказано`);
+  }
+});
+
+test("reads a decimal comma here too", () => {
+  const result = validateCircumferences(rawCm({ waist: "92,5" }));
+  assert.equal(result.ok && result.values.waist, 92.5);
+});
+
+test("every paired site has both sides and every id is unique", () => {
+  const ids = CIRCUMFERENCE_SITES.map((s) => s.id);
+  assert.equal(new Set(ids).size, ids.length);
+
+  // A left without a right would show up as a lonely box in the form.
+  for (const site of CIRCUMFERENCE_SITES) {
+    if (site.side === null) continue;
+    const opposite = site.id.replace(
+      site.side,
+      site.side === "left" ? "right" : "left",
+    );
+    assert.ok(
+      ids.includes(opposite),
+      `${site.id} няма насрещна страна ${opposite}`,
+    );
+  }
 });

@@ -16,7 +16,7 @@ import {
 import { formatMm, sumSkinfolds } from "@/lib/measurements";
 import { SkinfoldChart } from "./skinfold-chart";
 import { CompareSessions } from "./compare";
-import { toValues } from "./to-values";
+import { toCircumferences, toValues } from "./to-values";
 import type { SessionWithSkinfolds } from "@/lib/types";
 
 export default async function MeasurementsPage({
@@ -35,7 +35,7 @@ export default async function MeasurementsPage({
 
   const { data } = await supabase
     .from("measurement_sessions")
-    .select("*, skinfold_measurements(*)")
+    .select("*, skinfold_measurements(*), circumference_measurements(*)")
     .eq("client_id", id)
     .order("measured_at", { ascending: false });
 
@@ -43,7 +43,13 @@ export default async function MeasurementsPage({
 
   const rows = sessions.map((session) => {
     const values = toValues(session);
-    return { session, values, total: sumSkinfolds(values) };
+    const circumferences = toCircumferences(session);
+    return {
+      session,
+      values,
+      circumferences,
+      total: sumSkinfolds(values),
+    };
   });
 
   // Oldest first for the chart; the table reads newest first.
@@ -54,7 +60,7 @@ export default async function MeasurementsPage({
   return (
     <>
       <PageHeader
-        title="Измервания с калипер"
+        title="Измервания"
         description={`Клиент: ${client.full_name}`}
         action={
           <Button
@@ -113,12 +119,13 @@ export default async function MeasurementsPage({
                         <TableHead>Дата</TableHead>
                         <TableHead>Σ Skinfold</TableHead>
                         <TableHead>Промяна</TableHead>
-                        <TableHead>Точки</TableHead>
+                        <TableHead>Гънки</TableHead>
+                        <TableHead>Обиколки</TableHead>
                         <TableHead />
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {rows.map(({ session, values, total }, i) => {
+                      {rows.map(({ session, values, circumferences, total }, i) => {
                         // Rows run newest first, so the previous measurement is
                         // the next one down.
                         const older = rows[i + 1];
@@ -137,8 +144,11 @@ export default async function MeasurementsPage({
                                 ? "—"
                                 : `${change > 0 ? "+" : ""}${formatMm(change)} mm`}
                             </TableCell>
-                            <TableCell className="text-muted-foreground">
+                            <TableCell className="text-muted-foreground tabular-nums">
                               {Object.keys(values).length}
+                            </TableCell>
+                            <TableCell className="text-muted-foreground tabular-nums">
+                              {Object.keys(circumferences).length}
                             </TableCell>
                             <TableCell className="text-right">
                               <Button

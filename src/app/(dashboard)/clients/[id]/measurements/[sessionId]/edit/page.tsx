@@ -3,7 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { PageHeader } from "@/components/page-header";
 import { SessionForm } from "../../session-form";
 import { updateSession } from "../../actions";
-import { toValues } from "../../to-values";
+import { toCircumferences, toValues } from "../../to-values";
 import type { SessionWithSkinfolds } from "@/lib/types";
 
 export default async function EditMeasurementPage({
@@ -14,7 +14,7 @@ export default async function EditMeasurementPage({
 
   const { data } = await supabase
     .from("measurement_sessions")
-    .select("*, skinfold_measurements(*)")
+    .select("*, skinfold_measurements(*), circumference_measurements(*)")
     .eq("id", sessionId)
     .eq("client_id", id)
     .maybeSingle<SessionWithSkinfolds>();
@@ -25,7 +25,7 @@ export default async function EditMeasurementPage({
   // form offers when creating.
   const { data: earlier } = await supabase
     .from("measurement_sessions")
-    .select("*, skinfold_measurements(*)")
+    .select("*, skinfold_measurements(*), circumference_measurements(*)")
     .eq("client_id", id)
     .lt("measured_at", data.measured_at)
     .order("measured_at", { ascending: false })
@@ -48,8 +48,10 @@ export default async function EditMeasurementPage({
           measured_at: data.measured_at,
           notes: data.notes ?? "",
           values: toValues(data),
+          circumferences: toCircumferences(data),
         }}
         previous={earlier ? toValues(earlier) : undefined}
+        previousCircumferences={earlier ? toCircumferences(earlier) : undefined}
       />
     </>
   );

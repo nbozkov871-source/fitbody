@@ -9,12 +9,19 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
+  CIRCUMFERENCE_GROUPS,
+  CIRCUMFERENCE_SITES,
+  MAX_CM,
   MAX_MM,
   MEASUREMENT_SITES,
+  MIN_CM,
   MIN_MM,
+  formatCm,
   formatMm,
+  type CircumferenceValues,
   type SkinfoldValues,
 } from "@/lib/measurements";
+import { BodyFigure } from "./body-figure";
 
 type Props = {
   action: (formData: FormData) => void | Promise<void>;
@@ -24,9 +31,11 @@ type Props = {
     measured_at: string;
     notes: string;
     values: SkinfoldValues;
+    circumferences: CircumferenceValues;
   };
   /** The readings from the session before this one, shown beside each input. */
   previous?: SkinfoldValues;
+  previousCircumferences?: CircumferenceValues;
 };
 
 function SubmitButton({ label }: { label: string }) {
@@ -48,6 +57,7 @@ export function SessionForm({
   submitLabel,
   defaults,
   previous,
+  previousCircumferences,
 }: Props) {
   const [values, setValues] = useState<Record<string, string>>(() => {
     const initial: Record<string, string> = {};
@@ -57,6 +67,24 @@ export function SessionForm({
     }
     return initial;
   });
+
+  const [circumferences, setCircumferences] = useState<Record<string, string>>(
+    () => {
+      const initial: Record<string, string> = {};
+      for (const site of CIRCUMFERENCE_SITES) {
+        const value = defaults?.circumferences[site.id];
+        initial[site.id] = value === undefined ? "" : String(value);
+      }
+      return initial;
+    },
+  );
+
+  const filled = new Set(
+    CIRCUMFERENCE_SITES.filter((s) => {
+      const n = Number(String(circumferences[s.id] ?? "").replace(",", "."));
+      return Number.isFinite(n) && n > 0;
+    }).map((s) => s.id),
+  );
 
   const entered = MEASUREMENT_SITES.map((site) =>
     Number(String(values[site.id] ?? "").replace(",", ".")),
@@ -130,6 +158,82 @@ export function SessionForm({
               </div>
             );
           })}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="flex-row items-center justify-between">
+          <CardTitle>Обиколки</CardTitle>
+          <p className="text-sm text-muted-foreground tabular-nums">
+            {filled.size} от {CIRCUMFERENCE_SITES.length}
+          </p>
+        </CardHeader>
+        <CardContent className="grid gap-8 lg:grid-cols-[auto_1fr]">
+          <BodyFigure
+            filled={filled}
+            onPick={(site) => document.getElementById(`circ-${site}`)?.focus()}
+          />
+
+          <div className="grid gap-6">
+            {CIRCUMFERENCE_GROUPS.map((group) => {
+              const sites = CIRCUMFERENCE_SITES.filter(
+                (s) => s.group === group.id,
+              );
+              return (
+                <div key={group.id} className="grid gap-3">
+                  <p className="text-xs tracking-widest text-muted-foreground uppercase">
+                    {group.label}
+                  </p>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    {sites.map((site) => {
+                      const before = previousCircumferences?.[site.id];
+                      const label =
+                        site.side === "left"
+                          ? `${site.name} (ляво)`
+                          : site.side === "right"
+                            ? `${site.name} (дясно)`
+                            : site.name;
+
+                      return (
+                        <div key={site.id} className="grid gap-1.5">
+                          <Label htmlFor={`circ-${site.id}`} className="text-sm">
+                            {label}
+                          </Label>
+                          <div className="flex items-center gap-2">
+                            <Input
+                              id={`circ-${site.id}`}
+                              name={`circ_${site.id}`}
+                              type="number"
+                              inputMode="decimal"
+                              step="0.5"
+                              min={MIN_CM}
+                              max={MAX_CM}
+                              placeholder="—"
+                              value={circumferences[site.id]}
+                              onChange={(e) =>
+                                setCircumferences({
+                                  ...circumferences,
+                                  [site.id]: e.target.value,
+                                })
+                              }
+                            />
+                            <span className="text-sm text-muted-foreground">
+                              см
+                            </span>
+                          </div>
+                          {before !== undefined && (
+                            <p className="text-xs text-muted-foreground">
+                              Предишно: {formatCm(before)} см
+                            </p>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </CardContent>
       </Card>
 

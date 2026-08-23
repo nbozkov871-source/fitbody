@@ -126,7 +126,15 @@ export type SkinfoldMeasurement = {
   value_mm: number;
 };
 
-/** A session with its readings, as the pages consume it. */
+export type CircumferenceMeasurement = {
+  id: string;
+  session_id: string;
+  site: string;
+  value_cm: number;
+};
+
+/** A session with everything taken at it, as the pages consume it. */
 export type SessionWithSkinfolds = MeasurementSession & {
   skinfold_measurements: SkinfoldMeasurement[];
+  circumference_measurements?: CircumferenceMeasurement[];
 };

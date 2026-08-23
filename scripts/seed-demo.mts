@@ -20,7 +20,7 @@ import {
   calculateTargets,
   type PlanInput,
 } from "../src/lib/nutrition.ts";
-import { MEASUREMENT_SITES } from "../src/lib/measurements.ts";
+import { CIRCUMFERENCE_SITES, MEASUREMENT_SITES } from "../src/lib/measurements.ts";
 
 // Fixed ids are what make the script idempotent, and they are the only marker
 // that these rows are demo data. Nothing on the surface says so on purpose:
@@ -74,6 +74,8 @@ type Profile = {
   };
   skinfoldStart: Record<string, number>;
   skinfoldWeekly: number;
+  /** Starting tape readings; the rest follow the same drift as the body does. */
+  circumferenceStart: Record<string, number>;
   mealsPerDay: number;
 };
 
@@ -97,6 +99,13 @@ const PEOPLE: Profile[] = [
       abdominal: 28, thigh: 30, chest: 14,
     },
     skinfoldWeekly: -0.55,
+    circumferenceStart: {
+      neck: 34, shoulders: 108, chest: 98, waist: 92, hips: 106,
+      arm_left: 30, arm_right: 30.5, forearm_left: 24, forearm_right: 24.5,
+      wrist_left: 16, wrist_right: 16,
+      thigh_left: 61, thigh_right: 61.5, calf_left: 38, calf_right: 38,
+      ankle_left: 23, ankle_right: 23,
+    },
     mealsPerDay: 4,
   },
   {
@@ -119,6 +128,13 @@ const PEOPLE: Profile[] = [
       abdominal: 14, thigh: 12, chest: 7,
     },
     skinfoldWeekly: 0.12,
+    circumferenceStart: {
+      neck: 38, shoulders: 116, chest: 96, waist: 79, hips: 94,
+      arm_left: 32, arm_right: 32.5, forearm_left: 27, forearm_right: 27.5,
+      wrist_left: 17, wrist_right: 17,
+      thigh_left: 55, thigh_right: 55, calf_left: 37, calf_right: 37.5,
+      ankle_left: 23, ankle_right: 23,
+    },
     mealsPerDay: 5,
   },
 ];
@@ -305,6 +321,19 @@ async function main() {
       skinfoldSeries.set(site.id, series(start, drift, WEEKS, random));
     }
 
+    // Tape readings move with the same trend as the body: the waist follows the
+    // waist drift, everything else scales gently with it.
+    const circumferenceSeries = new Map<string, number[]>();
+    for (const site of CIRCUMFERENCE_SITES) {
+      const start = person.circumferenceStart[site.id];
+      if (start === undefined) continue;
+      const drift =
+        site.id === "waist"
+          ? person.weekly.waist
+          : person.weekly.waist * (start / 92) * 0.5;
+      circumferenceSeries.set(site.id, series(start, drift, WEEKS, random));
+    }
+
     for (const [i, measured_at] of dates.entries()) {
       const { data: session, error: sessionError } = await supabase
         .from("measurement_sessions")
@@ -332,6 +361,20 @@ async function main() {
         .insert(rows);
 
       if (rowsError) throw new Error(rowsError.message);
+
+      const circumferenceRows = [...circumferenceSeries.entries()].map(
+        ([site, values]) => ({
+          session_id: session.id,
+          site,
+          value_cm: Math.min(250, Math.max(10, values[i])),
+        }),
+      );
+
+      const { error: circError } = await supabase
+        .from("circumference_measurements")
+        .insert(circumferenceRows);
+
+      if (circError) throw new Error(circError.message);
     }
 
     // The plan comes from the app's own formulas, applied to the latest

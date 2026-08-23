@@ -6,12 +6,15 @@ import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
+  CIRCUMFERENCE_GROUPS,
+  CIRCUMFERENCE_SITES,
   MEASUREMENT_SITES,
+  formatCm,
   formatMm,
   sumSkinfolds,
   calculateBodyFat,
 } from "@/lib/measurements";
-import { toValues } from "../to-values";
+import { toCircumferences, toValues } from "../to-values";
 import { DeleteSession } from "../delete-session";
 import type { Client, SessionWithSkinfolds } from "@/lib/types";
 
@@ -23,7 +26,7 @@ export default async function MeasurementDetailPage({
 
   const { data } = await supabase
     .from("measurement_sessions")
-    .select("*, skinfold_measurements(*)")
+    .select("*, skinfold_measurements(*), circumference_measurements(*)")
     .eq("id", sessionId)
     .eq("client_id", id)
     .maybeSingle<SessionWithSkinfolds>();
@@ -37,6 +40,7 @@ export default async function MeasurementDetailPage({
     .maybeSingle<Client>();
 
   const values = toValues(data);
+  const circumferences = toCircumferences(data);
   const total = sumSkinfolds(values);
 
   // Returns null until a methodology is registered, so nothing invented shows up
@@ -149,6 +153,47 @@ export default async function MeasurementDetailPage({
             </dl>
           </CardContent>
         </Card>
+
+        {Object.keys(circumferences).length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Обиколки</CardTitle>
+            </CardHeader>
+            <CardContent className="grid gap-6">
+              {CIRCUMFERENCE_GROUPS.map((group) => {
+                const rows = CIRCUMFERENCE_SITES.filter(
+                  (s) => s.group === group.id && circumferences[s.id] !== undefined,
+                );
+                if (rows.length === 0) return null;
+
+                return (
+                  <div key={group.id}>
+                    <p className="mb-2 text-xs tracking-widest text-muted-foreground uppercase">
+                      {group.label}
+                    </p>
+                    <dl className="text-sm">
+                      {rows.map((site) => (
+                        <div
+                          key={site.id}
+                          className="flex items-baseline justify-between gap-4 border-t py-2.5 first:border-t-0"
+                        >
+                          <dt>
+                            {site.name}
+                            {site.side === "left" && " (ляво)"}
+                            {site.side === "right" && " (дясно)"}
+                          </dt>
+                          <dd className="tabular-nums whitespace-nowrap">
+                            {formatCm(circumferences[site.id])} см
+                          </dd>
+                        </div>
+                      ))}
+                    </dl>
+                  </div>
+                );
+              })}
+            </CardContent>
+          </Card>
+        )}
 
         {data.notes && (
           <Card>

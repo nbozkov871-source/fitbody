@@ -3,7 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { PageHeader } from "@/components/page-header";
 import { SessionForm } from "../session-form";
 import { createSession } from "../actions";
-import { toValues } from "../to-values";
+import { toCircumferences, toValues } from "../to-values";
 import type { SessionWithSkinfolds } from "@/lib/types";
 
 export default async function NewMeasurementPage({
@@ -24,7 +24,7 @@ export default async function NewMeasurementPage({
   // change as they type rather than after saving.
   const { data: last } = await supabase
     .from("measurement_sessions")
-    .select("*, skinfold_measurements(*)")
+    .select("*, skinfold_measurements(*), circumference_measurements(*)")
     .eq("client_id", id)
     .order("measured_at", { ascending: false })
     .limit(1)
@@ -43,6 +43,7 @@ export default async function NewMeasurementPage({
         cancelHref={`/clients/${id}/measurements`}
         submitLabel="Запази измерването"
         previous={last ? toValues(last) : undefined}
+        previousCircumferences={last ? toCircumferences(last) : undefined}
       />
     </>
   );

@@ -116,3 +116,94 @@ export function calculateBodyFat(
   const percent = method.calculate(input);
   return percent === null ? null : { method, percent };
 }
+
+// --- Circumferences ---------------------------------------------------------
+
+export type CircumferenceSite = {
+  id: string;
+  name: string;
+  unit: "cm";
+  /** Grouped so the form can pair left and right rather than listing fifteen boxes. */
+  group: "torso" | "arms" | "legs";
+  /** Null where the site is single, otherwise which side this one is. */
+  side: "left" | "right" | null;
+  hint: string;
+};
+
+/** A tape reads roughly this range across every site on a body. */
+export const MIN_CM = 10;
+export const MAX_CM = 250;
+
+export const CIRCUMFERENCE_SITES: CircumferenceSite[] = [
+  { id: "neck", name: "Врат", unit: "cm", group: "torso", side: null, hint: "Под адамовата ябълка" },
+  { id: "shoulders", name: "Рамене", unit: "cm", group: "torso", side: null, hint: "През най-широката част" },
+  { id: "chest", name: "Гърди", unit: "cm", group: "torso", side: null, hint: "На нивото на зърната, при спокойно дишане" },
+  { id: "waist", name: "Талия", unit: "cm", group: "torso", side: null, hint: "В най-тясната част, обикновено над пъпа" },
+  { id: "hips", name: "Ханш", unit: "cm", group: "torso", side: null, hint: "През най-широката част на седалището" },
+
+  { id: "arm_left", name: "Ръка", unit: "cm", group: "arms", side: "left", hint: "Бицепс в отпуснато състояние" },
+  { id: "arm_right", name: "Ръка", unit: "cm", group: "arms", side: "right", hint: "Бицепс в отпуснато състояние" },
+  { id: "forearm_left", name: "Предмишница", unit: "cm", group: "arms", side: "left", hint: "В най-широката част" },
+  { id: "forearm_right", name: "Предмишница", unit: "cm", group: "arms", side: "right", hint: "В най-широката част" },
+  { id: "wrist_left", name: "Китка", unit: "cm", group: "arms", side: "left", hint: "Точно над костта" },
+  { id: "wrist_right", name: "Китка", unit: "cm", group: "arms", side: "right", hint: "Точно над костта" },
+
+  { id: "thigh_left", name: "Бедро", unit: "cm", group: "legs", side: "left", hint: "Под седалищната гънка" },
+  { id: "thigh_right", name: "Бедро", unit: "cm", group: "legs", side: "right", hint: "Под седалищната гънка" },
+  { id: "calf_left", name: "Прасец", unit: "cm", group: "legs", side: "left", hint: "В най-широката част" },
+  { id: "calf_right", name: "Прасец", unit: "cm", group: "legs", side: "right", hint: "В най-широката част" },
+  { id: "ankle_left", name: "Глезен", unit: "cm", group: "legs", side: "left", hint: "Над костта" },
+  { id: "ankle_right", name: "Глезен", unit: "cm", group: "legs", side: "right", hint: "Над костта" },
+];
+
+export const CIRCUMFERENCE_BY_ID = new Map(
+  CIRCUMFERENCE_SITES.map((s) => [s.id, s]),
+);
+
+export const CIRCUMFERENCE_GROUPS = [
+  { id: "torso" as const, label: "Торс" },
+  { id: "arms" as const, label: "Ръце" },
+  { id: "legs" as const, label: "Крака" },
+];
+
+export type CircumferenceValues = Record<string, number>;
+
+export type CircumferenceValidation =
+  | { ok: true; values: CircumferenceValues }
+  | { ok: false; errors: Record<string, string> };
+
+/**
+ * Same contract as the skinfold check: blank is allowed, because no trainer
+ * measures all fifteen every time, but a filled box has to be a real reading.
+ */
+export function validateCircumferences(
+  raw: Record<string, string>,
+): CircumferenceValidation {
+  const values: CircumferenceValues = {};
+  const errors: Record<string, string> = {};
+
+  for (const site of CIRCUMFERENCE_SITES) {
+    const entry = (raw[site.id] ?? "").trim();
+    if (entry === "") continue;
+
+    const parsed = Number(entry.replace(",", "."));
+
+    if (!Number.isFinite(parsed)) {
+      errors[site.id] = "Въведете число.";
+    } else if (parsed < MIN_CM) {
+      errors[site.id] = `Не по-малко от ${MIN_CM} см.`;
+    } else if (parsed > MAX_CM) {
+      errors[site.id] = `Не повече от ${MAX_CM} см.`;
+    } else {
+      values[site.id] = Math.round(parsed * 10) / 10;
+    }
+  }
+
+  return Object.keys(errors).length > 0
+    ? { ok: false, errors }
+    : { ok: true, values };
+}
+
+export function formatCm(value: number): string {
+  return value.toLocaleString("bg-BG", { maximumFractionDigits: 1 });
+}

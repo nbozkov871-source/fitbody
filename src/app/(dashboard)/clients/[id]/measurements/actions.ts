@@ -3,7 +3,12 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { MEASUREMENT_SITES, validateSkinfolds } from "@/lib/measurements";
+import {
+  CIRCUMFERENCE_SITES,
+  MEASUREMENT_SITES,
+  validateCircumferences,
+  validateSkinfolds,
+} from "@/lib/measurements";
 
 /**
  * Confirms the signed-in trainer owns this client before anything is written.
@@ -49,6 +54,25 @@ function readSkinfolds(formData: FormData) {
   return result.values;
 }
 
+function readCircumferences(formData: FormData) {
+  const raw: Record<string, string> = {};
+  for (const site of CIRCUMFERENCE_SITES) {
+    raw[site.id] = String(formData.get(`circ_${site.id}`) ?? "");
+  }
+
+  const result = validateCircumferences(raw);
+  if (!result.ok) {
+    const first = Object.entries(result.errors)[0];
+    const site = CIRCUMFERENCE_SITES.find((s) => s.id === first[0]);
+    const label = site
+      ? `${site.name}${site.side === "left" ? " (ляво)" : site.side === "right" ? " (дясно)" : ""}`
+      : first[0];
+    throw new Error(`${label}: ${first[1]}`);
+  }
+
+  return result.values;
+}
+
 function readDate(formData: FormData) {
   const value = String(formData.get("measured_at") ?? "").trim();
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
@@ -57,11 +81,51 @@ function readDate(formData: FormData) {
   return value;
 }
 
+type Client = Awaited<ReturnType<typeof createClient>>;
+
+/** Writes both kinds of reading; returns a message if either insert refused. */
+async function writeReadings(
+  supabase: Client,
+  sessionId: string,
+  skinfolds: Record<string, number>,
+  circumferences: Record<string, number>,
+): Promise<string | null> {
+  const skinfoldRows = Object.entries(skinfolds).map(([site, value_mm]) => ({
+    session_id: sessionId,
+    site,
+    value_mm,
+  }));
+
+  if (skinfoldRows.length > 0) {
+    const { error } = await supabase
+      .from("skinfold_measurements")
+      .insert(skinfoldRows);
+    if (error) return error.message;
+  }
+
+  const circumferenceRows = Object.entries(circumferences).map(
+    ([site, value_cm]) => ({ session_id: sessionId, site, value_cm }),
+  );
+
+  if (circumferenceRows.length > 0) {
+    const { error } = await supabase
+      .from("circumference_measurements")
+      .insert(circumferenceRows);
+    if (error) return error.message;
+  }
+
+  return null;
+}
+
 export async function createSession(clientId: string, formData: FormData) {
   const { supabase, user } = await requireOwnedClient(clientId);
 
   const values = readSkinfolds(formData);
-  if (Object.keys(values).length === 0) {
+  const circumferences = readCircumferences(formData);
+
+  // Either kind on its own is a real visit: a trainer may take only the tape one
+  // week and only the caliper the next.
+  if (Object.keys(values).length + Object.keys(circumferences).length === 0) {
     throw new Error("Въведете поне едно измерване.");
   }
 
@@ -78,21 +142,13 @@ export async function createSession(clientId: string, formData: FormData) {
 
   if (error) throw new Error(error.message);
 
-  const rows = Object.entries(values).map(([site, value_mm]) => ({
-    session_id: session.id,
-    site,
-    value_mm,
-  }));
-
-  const { error: rowsError } = await supabase
-    .from("skinfold_measurements")
-    .insert(rows);
+  const rowsError = await writeReadings(supabase, session.id, values, circumferences);
 
   // The session would otherwise survive with no readings, which reads as a
   // measurement that was taken and found nothing.
   if (rowsError) {
     await supabase.from("measurement_sessions").delete().eq("id", session.id);
-    throw new Error(rowsError.message);
+    throw new Error(rowsError);
   }
 
   revalidatePath(`/clients/${clientId}/measurements`);
@@ -108,7 +164,9 @@ export async function updateSession(
   const { supabase } = await requireOwnedClient(clientId);
 
   const values = readSkinfolds(formData);
-  if (Object.keys(values).length === 0) {
+  const circumferences = readCircumferences(formData);
+
+  if (Object.keys(values).length + Object.keys(circumferences).length === 0) {
     throw new Error("Въведете поне едно измерване.");
   }
 
@@ -125,24 +183,16 @@ export async function updateSession(
 
   // Replacing the readings rather than patching them, so a site the trainer
   // cleared this time does not linger from the previous save.
-  const { error: clearError } = await supabase
-    .from("skinfold_measurements")
-    .delete()
-    .eq("session_id", sessionId);
+  for (const table of ["skinfold_measurements", "circumference_measurements"]) {
+    const { error: clearError } = await supabase
+      .from(table)
+      .delete()
+      .eq("session_id", sessionId);
+    if (clearError) throw new Error(clearError.message);
+  }
 
-  if (clearError) throw new Error(clearError.message);
-
-  const rows = Object.entries(values).map(([site, value_mm]) => ({
-    session_id: sessionId,
-    site,
-    value_mm,
-  }));
-
-  const { error: rowsError } = await supabase
-    .from("skinfold_measurements")
-    .insert(rows);
-
-  if (rowsError) throw new Error(rowsError.message);
+  const rowsError = await writeReadings(supabase, sessionId, values, circumferences);
+  if (rowsError) throw new Error(rowsError);
 
   revalidatePath(`/clients/${clientId}/measurements`);
   revalidatePath(`/clients/${clientId}/measurements/${sessionId}`);
