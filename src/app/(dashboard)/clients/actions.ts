@@ -172,3 +172,30 @@ export async function restoreClient(clientId: string) {
   revalidatePath(`/clients/${clientId}`);
   revalidatePath("/dashboard");
 }
+
+/**
+ * Empties one client out of the bin for good. Unlike the soft delete this is
+ * the real thing: the cascade on client_id takes the metrics, the caliper
+ * sessions with their readings and the nutrition plans with it, and nothing
+ * brings any of it back.
+ *
+ * The `deleted_at` filter is the safety catch — a client that is still on the
+ * trainer's list cannot be destroyed by a stray id, only one they already
+ * chose to delete once.
+ */
+export async function purgeClient(clientId: string) {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("clients")
+    .delete()
+    .eq("id", clientId)
+    .not("deleted_at", "is", null)
+    .select("id");
+
+  if (error) throw new Error(error.message);
+  if (!data?.length) throw new Error("Този клиент не е в кошчето.");
+
+  revalidatePath("/clients");
+  revalidatePath("/dashboard");
+}
