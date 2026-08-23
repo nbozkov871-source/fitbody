@@ -11,6 +11,11 @@ const PUBLIC_ROUTES = [
   "/auth",
   "/privacy",
   "/terms",
+  // Asking for a reset link is by definition something you do while locked out.
+  // /reset-password is deliberately not here: the recovery link creates a
+  // session on its way through /auth/callback, so the guard turns anyone
+  // arriving without one back to the login screen.
+  "/forgot-password",
 ];
 
 export async function updateSession(request: NextRequest) {
