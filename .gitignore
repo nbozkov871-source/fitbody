@@ -46,3 +46,8 @@ next-env.d.ts
 # The template carries no secrets and is the only record of which variables
 # the app needs, so it is the one .env file that belongs in the repo.
 !.env.local.example
+
+# Local Claude Code state: machine paths and permissions, plus vendored
+# skills that belong to their authors rather than to this project.
+.claude/settings.local.json
+.claude/skills/
