@@ -57,7 +57,8 @@ export default async function ClientDetailPage({
 
   if (!client) notFound();
 
-  const [{ data: metrics }, { data: plans }] = await Promise.all([
+  const [{ data: metrics }, { data: plans }, { data: waistRows }] =
+    await Promise.all([
     supabase
       .from("client_metrics")
       .select("*")
@@ -69,7 +70,23 @@ export default async function ClientDetailPage({
       .select("id, title, status, target_calories, created_at")
       .eq("client_id", id)
       .order("created_at", { ascending: false }),
+    // Waist moved to the session-based table with the rest of the tape
+    // readings; client_metrics keeps what a scale measures.
+    supabase
+      .from("measurement_sessions")
+      .select("measured_at, circumference_measurements!inner(site, value_cm)")
+      .eq("client_id", id)
+      .eq("circumference_measurements.site", "waist")
+      .order("measured_at", { ascending: true }),
   ]);
+
+  const waistByDate = new Map<string, number>();
+  for (const row of waistRows ?? []) {
+    const reading = [row.circumference_measurements].flat()[0] as
+      | { value_cm: number }
+      | undefined;
+    if (reading) waistByDate.set(row.measured_at as string, Number(reading.value_cm));
+  }
 
   const latest = metrics?.[0];
   // The table reads newest first; a chart has to run the other way.
@@ -167,7 +184,7 @@ export default async function ClientDetailPage({
           </TabsContent>
 
           <TabsContent value="metrics" className="mt-6 grid gap-4 lg:grid-cols-3">
-            {trend.length >= 2 && (
+            {(trend.length >= 2 || waistByDate.size >= 2) && (
               <Card className="lg:col-span-3">
                 <CardHeader>
                   <CardTitle>Тегло и талия във времето</CardTitle>
@@ -190,12 +207,9 @@ export default async function ClientDetailPage({
                         label: "Талия",
                         unit: "см",
                         colour: "var(--chart-2)",
-                        points: trend
-                          .filter((m) => m.waist_cm !== null)
-                          .map((m) => ({
-                            date: m.measured_at,
-                            value: Number(m.waist_cm),
-                          })),
+                        points: [...waistByDate.entries()].map(
+                          ([date, value]) => ({ date, value }),
+                        ),
                       },
                     ]}
                   />
@@ -231,7 +245,9 @@ export default async function ClientDetailPage({
                               : "—"}
                           </TableCell>
                           <TableCell>
-                            {metric.waist_cm ? `${metric.waist_cm} см` : "—"}
+                            {waistByDate.has(metric.measured_at)
+                              ? `${waistByDate.get(metric.measured_at)} см`
+                              : "—"}
                           </TableCell>
                         </TableRow>
                       ))}

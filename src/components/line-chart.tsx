@@ -31,9 +31,15 @@ export function LineChart({
   const plotW = width - pad.left - pad.right;
   const plotH = height - pad.top - pad.bottom;
 
-  const count = usable[0].points.length;
-  const x = (i: number) =>
-    pad.left + (count === 1 ? plotW / 2 : (i * plotW) / (count - 1));
+  // Series can come from different tables and so from different dates. Laying
+  // them out by position in the array would silently draw the second one at the
+  // first one's dates, so the axis is built from every date present and each
+  // point is placed at its own.
+  const axis = [...new Set(usable.flatMap((s) => s.points.map((p) => p.date)))].sort();
+  const x = (date: string) => {
+    const index = axis.indexOf(date);
+    return pad.left + (axis.length === 1 ? plotW / 2 : (index * plotW) / (axis.length - 1));
+  };
 
   // A flat series would divide by zero and a tight one would turn ordinary
   // noise into a mountain range, so every band keeps room around its values.
@@ -58,8 +64,8 @@ export function LineChart({
     Math.max(...primaryValues),
   ];
 
-  const first = primary.points[0];
-  const last = primary.points[primary.points.length - 1];
+  const firstDate = axis[0];
+  const lastDate = axis[axis.length - 1];
 
   return (
     <figure className="w-full">
@@ -101,14 +107,14 @@ export function LineChart({
         {usable.map((s, index) => {
           const y = index === 0 ? yPrimary : scaleFor(s);
           const line = s.points
-            .map((p, i) => `${x(i).toFixed(1)},${y(p.value).toFixed(1)}`)
+            .map((p) => `${x(p.date).toFixed(1)},${y(p.value).toFixed(1)}`)
             .join(" ");
 
           return (
             <g key={s.label}>
               {index === 0 && (
                 <polygon
-                  points={`${pad.left},${pad.top + plotH} ${line} ${x(count - 1).toFixed(1)},${pad.top + plotH}`}
+                  points={`${x(s.points[0].date).toFixed(1)},${pad.top + plotH} ${line} ${x(s.points[s.points.length - 1].date).toFixed(1)},${pad.top + plotH}`}
                   fill={s.colour}
                   opacity="0.12"
                 />
@@ -125,7 +131,7 @@ export function LineChart({
               {s.points.map((p, i) => (
                 <circle
                   key={p.date + i}
-                  cx={x(i)}
+                  cx={x(p.date)}
                   cy={y(p.value)}
                   r="3"
                   fill="var(--background)"
@@ -138,7 +144,7 @@ export function LineChart({
         })}
 
         <text x={pad.left} y={height - 10} fill="var(--muted-foreground)" fontSize="11">
-          {first.date}
+          {firstDate}
         </text>
         <text
           x={width - pad.right}
@@ -147,7 +153,7 @@ export function LineChart({
           fill="var(--muted-foreground)"
           fontSize="11"
         >
-          {last.date}
+          {lastDate}
         </text>
       </svg>
 
